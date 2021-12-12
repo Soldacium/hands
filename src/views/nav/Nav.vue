@@ -11,16 +11,12 @@ const buttons: Button[] = [
     content: "Main",
   },
   {
-    link: "about",
-    content: "About",
+    link: "rock-paper-scissors",
+    content: "RPS",
   },
   {
     link: "about",
     content: "Contact",
-  },
-  {
-    link: "login",
-    content: "Login",
   },
 ];
 </script>
