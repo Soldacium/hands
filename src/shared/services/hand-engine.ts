@@ -1,15 +1,7 @@
 import * as THREE from "three";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import {
-  CylinderGeometry,
-  Float32BufferAttribute,
-  Uint16BufferAttribute,
-  Vector3,
-} from "three";
-
-import bonesExample from "./bones-example";
-import handBones from "./hand-bones";
+import { GUI } from "dat.gui";
 
 class HandEngine {
   private canvas!: HTMLCanvasElement;
@@ -20,6 +12,8 @@ class HandEngine {
   private frameId = 0;
   private controls!: OrbitControls;
   private hand!: THREE.Object3D;
+  private handSkeleton!: THREE.Skeleton;
+  private gui!: GUI;
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -37,7 +31,7 @@ class HandEngine {
       0.1,
       1000
     );
-    this.camera.position.z = 200;
+    this.camera.position.z = 20;
     this.camera.position.y = 0;
     this.camera.position.x = 0;
     this.camera.lookAt(0, 0, 0);
@@ -57,8 +51,6 @@ class HandEngine {
     document.addEventListener("resize", () => {
       this.resize();
     });
-
-    bonesExample.initBones(this.scene);
   }
 
   private resize(): void {
@@ -74,24 +66,18 @@ class HandEngine {
   }
 
   addHand() {
-    const loader = new FBXLoader();
+    const loader = new GLTFLoader();
 
     loader.load(
-      "src/assets/3d/hand.fbx",
-      (object: THREE.Object3D) => {
-        /*
-        const material = new THREE.MeshBasicMaterial({
-          color: "black",
-        });
-        (object.children[0] as THREE.Mesh).material = material;
-        */
-        this.hand = object;
-        this.hand.position.z = 0;
-        this.hand.position.x = 200;
-        this.hand.position.y = -400;
-        // this.scene.add(object);
-        handBones.initBones(this.scene, this.hand);
-        console.log(this.hand);
+      "src/assets/3d/scene.gltf",
+      (gltf: GLTF) => {
+        this.hand = gltf.scene;
+        this.scene.add(this.hand);
+        this.handSkeleton = (
+          this.hand.children[0].children[0].children[0].children[0]
+            .children[2] as THREE.SkinnedMesh
+        ).skeleton;
+        this.setupHandSkeletonGUI();
       },
       undefined,
       function (error) {
@@ -100,11 +86,52 @@ class HandEngine {
     );
   }
 
-  addCube() {
-    const geometry = new THREE.BoxGeometry(2, 2, 2);
-    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    this.scene.add(cube);
+  private setupHandSkeletonGUI() {
+    this.gui = new GUI();
+    for (let i = 0; i < this.handSkeleton.bones.length; i++) {
+      const bone = this.handSkeleton.bones[i];
+
+      const folder = this.gui.addFolder("Bone " + i);
+
+      folder.add(
+        bone.position,
+        "x",
+        -10 + bone.position.x,
+        10 + bone.position.x
+      );
+      folder.add(
+        bone.position,
+        "y",
+        -10 + bone.position.y,
+        10 + bone.position.y
+      );
+      folder.add(
+        bone.position,
+        "z",
+        -10 + bone.position.z,
+        10 + bone.position.z
+      );
+
+      folder.add(bone.rotation, "x", -Math.PI, Math.PI);
+      folder.add(bone.rotation, "y", -Math.PI, Math.PI);
+      folder.add(bone.rotation, "z", -Math.PI, Math.PI);
+
+      folder.add(bone.scale, "x", 0, 2);
+      folder.add(bone.scale, "y", 0, 2);
+      folder.add(bone.scale, "z", 0, 2);
+
+      folder.__controllers[0].name("position.x");
+      folder.__controllers[1].name("position.y");
+      folder.__controllers[2].name("position.z");
+
+      folder.__controllers[3].name("rotation.x");
+      folder.__controllers[4].name("rotation.y");
+      folder.__controllers[5].name("rotation.z");
+
+      folder.__controllers[6].name("scale.x");
+      folder.__controllers[7].name("scale.y");
+      folder.__controllers[8].name("scale.z");
+    }
   }
 
   render() {
