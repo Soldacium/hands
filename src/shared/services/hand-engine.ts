@@ -14,6 +14,8 @@ class HandEngine {
   private hand!: THREE.Object3D;
   private handSkeleton!: THREE.Skeleton;
   private gui!: GUI;
+  private mixer!: THREE.AnimationMixer;
+  private clock = new THREE.Clock();
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -69,15 +71,24 @@ class HandEngine {
     const loader = new GLTFLoader();
 
     loader.load(
-      "src/assets/3d/scene.gltf",
+      "src/assets/3d/Hands1Anim.glb",
       (gltf: GLTF) => {
+        console.log(gltf);
         this.hand = gltf.scene;
+        this.scene.add(this.hand);
+        this.mixer = new THREE.AnimationMixer(gltf.scene);
+
+        gltf.animations.forEach((clip) => {
+          this.mixer.clipAction(clip).play();
+        });
+        /*
         this.scene.add(this.hand);
         this.handSkeleton = (
           this.hand.children[0].children[0].children[0].children[0]
             .children[2] as THREE.SkinnedMesh
         ).skeleton;
-        this.setupHandSkeletonGUI();
+        */
+        // this.setupHandSkeletonGUI();
       },
       undefined,
       function (error) {
@@ -141,6 +152,10 @@ class HandEngine {
 
     this.camera.lookAt(this.scene.position);
     this.renderer.render(this.scene, this.camera);
+
+    var delta = this.clock.getDelta();
+
+    if (this.mixer) this.mixer.update(delta);
   }
 
   stopRender() {
