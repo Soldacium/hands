@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from "dat.gui";
+import BackgroundAnimation from "./background-animation";
 
 class HandEngine {
   private canvas!: HTMLCanvasElement;
@@ -11,7 +12,7 @@ class HandEngine {
   handState = 1;
   private frameId = 0;
   private controls!: OrbitControls;
-  private hand!: THREE.Object3D;
+  private hands!: THREE.Object3D;
   private handSkeleton!: THREE.Skeleton;
   private gui!: GUI;
   private mixer!: THREE.AnimationMixer;
@@ -39,11 +40,11 @@ class HandEngine {
     this.camera.lookAt(0, 0, 0);
     this.scene.add(this.camera);
 
-    const light = new THREE.PointLight(0xffffff, 2, 0);
-    light.position.set(400, 400, 50);
+    const light = new THREE.PointLight(0xffff00, 0.4, 0);
+    light.position.set(100, 100, 50);
     this.scene.add(light);
 
-    const color = 0x000000;
+    const color = 0xeeeeee;
     const intensity = 1;
     const lighta = new THREE.AmbientLight(color, intensity);
     this.scene.add(lighta);
@@ -53,6 +54,8 @@ class HandEngine {
     document.addEventListener("resize", () => {
       this.resize();
     });
+    // BackgroundAnimation.makeFracturedBackground(this.scene);
+    BackgroundAnimation.makeRingedBakcground(this.scene);
   }
 
   private resize(): void {
@@ -71,15 +74,17 @@ class HandEngine {
     const loader = new GLTFLoader();
 
     loader.load(
-      "src/assets/3d/Hands1Anim.glb",
+      "src/assets/3d/Hands2Anim.glb",
       (gltf: GLTF) => {
-        console.log(gltf);
-        this.hand = gltf.scene;
-        this.scene.add(this.hand);
+        this.hands = gltf.scene;
+        this.scene.add(this.hands);
+        console.log(this.hands);
         this.mixer = new THREE.AnimationMixer(gltf.scene);
-
+        this.changeHandsMaterial();
         gltf.animations.forEach((clip) => {
-          this.mixer.clipAction(clip).play();
+          if (clip.name.includes("Idle")) {
+            this.mixer.clipAction(clip).play();
+          }
         });
         /*
         this.scene.add(this.hand);
@@ -95,6 +100,18 @@ class HandEngine {
         console.error(error);
       }
     );
+  }
+
+  changeHandsMaterial() {
+    this.hands.children.forEach((hand) => {
+      const handMesh: THREE.SkinnedMesh = hand.children[1] as THREE.SkinnedMesh;
+      const newMaterial = new THREE.MeshLambertMaterial({
+        color: 0xdaa520,
+        side: THREE.FrontSide,
+      });
+
+      handMesh.material = newMaterial;
+    });
   }
 
   private setupHandSkeletonGUI() {
