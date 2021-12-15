@@ -17,6 +17,7 @@ class HandEngine {
   private gui!: GUI;
   private mixer!: THREE.AnimationMixer;
   private clock = new THREE.Clock();
+  private frameTime = 0;
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -26,7 +27,7 @@ class HandEngine {
       antialias: true,
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setClearColor(0xffffff);
+    this.renderer.setClearColor(0x000000);
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
       75,
@@ -86,14 +87,6 @@ class HandEngine {
             this.mixer.clipAction(clip).play();
           }
         });
-        /*
-        this.scene.add(this.hand);
-        this.handSkeleton = (
-          this.hand.children[0].children[0].children[0].children[0]
-            .children[2] as THREE.SkinnedMesh
-        ).skeleton;
-        */
-        // this.setupHandSkeletonGUI();
       },
       undefined,
       function (error) {
@@ -114,63 +107,17 @@ class HandEngine {
     });
   }
 
-  private setupHandSkeletonGUI() {
-    this.gui = new GUI();
-    for (let i = 0; i < this.handSkeleton.bones.length; i++) {
-      const bone = this.handSkeleton.bones[i];
-
-      const folder = this.gui.addFolder("Bone " + i);
-
-      folder.add(
-        bone.position,
-        "x",
-        -10 + bone.position.x,
-        10 + bone.position.x
-      );
-      folder.add(
-        bone.position,
-        "y",
-        -10 + bone.position.y,
-        10 + bone.position.y
-      );
-      folder.add(
-        bone.position,
-        "z",
-        -10 + bone.position.z,
-        10 + bone.position.z
-      );
-
-      folder.add(bone.rotation, "x", -Math.PI, Math.PI);
-      folder.add(bone.rotation, "y", -Math.PI, Math.PI);
-      folder.add(bone.rotation, "z", -Math.PI, Math.PI);
-
-      folder.add(bone.scale, "x", 0, 2);
-      folder.add(bone.scale, "y", 0, 2);
-      folder.add(bone.scale, "z", 0, 2);
-
-      folder.__controllers[0].name("position.x");
-      folder.__controllers[1].name("position.y");
-      folder.__controllers[2].name("position.z");
-
-      folder.__controllers[3].name("rotation.x");
-      folder.__controllers[4].name("rotation.y");
-      folder.__controllers[5].name("rotation.z");
-
-      folder.__controllers[6].name("scale.x");
-      folder.__controllers[7].name("scale.y");
-      folder.__controllers[8].name("scale.z");
-    }
-  }
-
   render() {
     this.frameId = requestAnimationFrame(() => {
       this.render();
     });
-
+    this.frameTime += 1;
     this.camera.lookAt(this.scene.position);
     this.renderer.render(this.scene, this.camera);
 
     var delta = this.clock.getDelta();
+
+    BackgroundAnimation.animateTriangles(this.frameTime);
 
     if (this.mixer) this.mixer.update(delta);
   }
