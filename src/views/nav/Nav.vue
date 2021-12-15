@@ -23,8 +23,7 @@ const buttons: Button[] = [
 
 <template>
   <div class="wrap">
-    <img alt="Vue logo" src="../../assets/logo.png" />
-    <div class="title">THE TEST APP</div>
+    <div class="title">HANDS</div>
     <div class="buttons">
       <router-link :to="button.link" v-for="button in buttons">
         <ButtonBasic>
