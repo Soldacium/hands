@@ -1,16 +1,13 @@
-import Delaunator from "delaunator";
+// import Delaunator from "delaunator";
 import * as THREE from "three";
-import { BufferGeometry } from "three";
-
-import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils";
 
 // options
-const pointsNum = 40;
-const bgSizeMax = 40;
-const bgSizeMin = 10;
-const bgLayersMax = 3;
-const bgSectionsPerLayer = 12;
-const triangleGroups: THREE.Mesh[][] = [];
+const bgSizeMax = 120;
+const bgSizeMin = 100;
+const bgLayersMax = 5;
+const bgSectionsPerLayer = 20;
+const triangleGroups: THREE.Group[] = [];
+const s = 10;
 
 const makeRingedBakcground = (scene: THREE.Scene) => {
   const ng = new THREE.RingGeometry(
@@ -65,76 +62,75 @@ const makeTriangles = (
   scene: THREE.Scene,
   triangleGeos: THREE.BufferGeometry[]
 ) => {
-  const wireframeColor = new THREE.Color("gold");
   const matWireframe = new THREE.LineBasicMaterial({
-    color: `gold`,
+    color: `white`,
     linewidth: 1,
   });
 
   const madeTriangles: THREE.Mesh[] = [];
 
   triangleGeos.forEach((geo, i) => {
-    /*
-    const color = `rgb(
-      ${Math.round((256 / triangleGeos.length) * i)},
-      ${Math.round((256 / triangleGeos.length) * i)},
-      ${Math.round((256 / triangleGeos.length) * i)})`;
-      */
     const color = "black";
     const material = new THREE.MeshLambertMaterial({
       color: new THREE.Color(color),
     });
-    geo.computeVertexNormals();
 
+    geo.computeVertexNormals();
     const triangle = new THREE.Mesh(geo, material);
-    // triangle.position.z = (-triangleGeos.length + i) / 4;
     const geoEdges = new THREE.EdgesGeometry(geo);
     const wireframe = new THREE.LineSegments(geoEdges, matWireframe);
     triangle.add(wireframe);
     madeTriangles.push(triangle);
-    scene.add(triangle);
   });
 
-  setupTrianglesPositions(madeTriangles);
+  setupTrianglesPositions(scene, madeTriangles);
 };
 
-const setupTrianglesPositions = (triangles: THREE.Mesh[]) => {
+const setupTrianglesPositions = (
+  scene: THREE.Scene,
+  triangles: THREE.Mesh[]
+) => {
   for (let i = 0; i < bgLayersMax; i++) {
-    const group1: THREE.Mesh[] = [];
-    const group2: THREE.Mesh[] = [];
+    const group1: THREE.Group = new THREE.Group();
+    const group2: THREE.Group = new THREE.Group();
 
     for (let j = 0; j < bgSectionsPerLayer * 2; j++) {
-      // console.log(triangleGeos[i * bgLayersMax + j], i * bgLayersMax + j);
-
       j % 2 === 0
-        ? group1.push(triangles[i * bgSectionsPerLayer * 2 + j])
-        : group2.push(triangles[i * bgSectionsPerLayer * 2 + j]);
+        ? group1.add(triangles[i * bgSectionsPerLayer * 2 + j])
+        : group2.add(triangles[i * bgSectionsPerLayer * 2 + j]);
     }
 
     triangleGroups.push(group1, group2);
+    scene.add(group1);
+    scene.add(group2);
 
-    const maxDist = bgLayersMax * 10;
+    group1.position.z = -170 + 10 * i;
+    group2.position.z = -170 + 10 * i + 6;
+    group2.scale.set(2, 2, 2);
+
+    // const maxDist = bgLayersMax * 10;
+    // console.log(group1);
+    /*
     group1.forEach((triangle, t) => {
-      triangle.position.z = -maxDist + i * 10;
+      
+      triangle.position.z = -50 - maxDist + i * 10;
       triangle.rotation.x = Math.sin(t / 12);
       triangle.rotation.y = Math.sin(t / 12);
     });
 
     group2.forEach((triangle, t) => {
-      triangle.position.z = -maxDist + i * 10 - 5;
-      triangle.rotation.x = -Math.sin(t / 12);
+      triangle.position.z = -50 - maxDist + i * 10 - 5;
+      triangle.rotation.x = -Math.sin(t / bgSectionsPerLayer);
       triangle.rotation.y = -Math.sin(t / 12);
     });
+    */
   }
 };
 
 const animateTriangles = (time: number) => {
-  triangleGroups.forEach((group) => {
-    group.forEach((triangle) => {
-      // console.log(time);
-      triangle.position.x += Math.cos(time / 30) * 1;
-      triangle.position.y += Math.cos(time / 30 + Math.PI / 2) * 1;
-    });
+  triangleGroups.forEach((group, i) => {
+    const speed = s + (i * s) / 2;
+    group.rotation.z += Math.cos((i / bgLayersMax) * 2 + time / speed) * 0.004;
   });
 };
 

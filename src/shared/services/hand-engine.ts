@@ -35,36 +35,35 @@ class HandEngine {
       0.1,
       1000
     );
-    this.camera.position.z = 20;
-    this.camera.position.y = 0;
-    this.camera.position.x = 0;
+    this.camera.position.set(0, 0, 30);
     this.camera.lookAt(0, 0, 0);
     this.scene.add(this.camera);
 
-    const light = new THREE.PointLight(0xffff00, 0.4, 0);
-    light.position.set(100, 100, 50);
+    const light = new THREE.PointLight(0xffffff, 0.7, 0);
+    light.position.set(0, 60, 100);
     this.scene.add(light);
 
-    const color = 0xeeeeee;
+    const color = 0x666666;
     const intensity = 1;
     const lighta = new THREE.AmbientLight(color, intensity);
     this.scene.add(lighta);
 
     this.setupCameraMovement();
 
-    document.addEventListener("resize", () => {
-      this.resize();
+    window.addEventListener("resize", () => {
+      // this.resize();
+      // console.log("r");
     });
-    // BackgroundAnimation.makeFracturedBackground(this.scene);
     BackgroundAnimation.makeRingedBakcground(this.scene);
   }
 
   private resize(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.camera.aspect = width / height;
+
+    this.camera.updateProjectionMatrix();
   }
 
   setupCameraMovement(): void {
@@ -99,7 +98,8 @@ class HandEngine {
     this.hands.children.forEach((hand) => {
       const handMesh: THREE.SkinnedMesh = hand.children[1] as THREE.SkinnedMesh;
       const newMaterial = new THREE.MeshLambertMaterial({
-        color: 0xdaa520,
+        // color: 0xdaa520,
+        color: "white",
         side: THREE.FrontSide,
       });
 
@@ -111,14 +111,14 @@ class HandEngine {
     this.frameId = requestAnimationFrame(() => {
       this.render();
     });
+
     this.frameTime += 1;
+    var delta = this.clock.getDelta();
+
     this.camera.lookAt(this.scene.position);
     this.renderer.render(this.scene, this.camera);
 
-    var delta = this.clock.getDelta();
-
     BackgroundAnimation.animateTriangles(this.frameTime);
-
     if (this.mixer) this.mixer.update(delta);
   }
 

@@ -20,6 +20,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   // store.commit("changeLoading");
+  console.log("hey");
   next();
 });
 
