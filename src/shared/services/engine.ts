@@ -1,26 +1,43 @@
 import * as THREE from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from "dat.gui";
-import BackgroundAnimation from "./background-animation";
+import Background from "./background";
+import Hands from "./hands";
+import Snake from "./snake";
 
-class HandEngine {
+class Engine {
   private canvas!: HTMLCanvasElement;
   private renderer!: THREE.WebGLRenderer;
   private camera!: THREE.PerspectiveCamera;
   private scene!: THREE.Scene;
-  handState = 1;
   private frameId = 0;
   private controls!: OrbitControls;
-  private hands!: THREE.Object3D;
-  private handSkeleton!: THREE.Skeleton;
-  private gui!: GUI;
-  private mixer!: THREE.AnimationMixer;
   private clock = new THREE.Clock();
   private frameTime = 0;
 
   init(canvas: HTMLCanvasElement) {
+    this.setupScene();
+    this.setupCanvas(canvas);
+    this.setupRenderer();
+    this.setupLights();
+    this.setupCamera();
+    this.setupEventListeners();
+    this.render();
+  }
+
+  private setupCanvas(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
+  }
+
+  private setupScene() {
+    this.scene = new THREE.Scene();
+    Background.makeRingedBakcground(this.scene);
+    Hands.setupHands(this.scene);
+    Snake.setupGame(this.scene);
+    console.log(this.scene);
+  }
+
+  private setupRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       alpha: true,
@@ -28,7 +45,9 @@ class HandEngine {
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearColor(0x000000);
-    this.scene = new THREE.Scene();
+  }
+
+  private setupCamera() {
     this.camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
@@ -38,7 +57,10 @@ class HandEngine {
     this.camera.position.set(0, 0, 30);
     this.camera.lookAt(0, 0, 0);
     this.scene.add(this.camera);
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+  }
 
+  private setupLights() {
     const light = new THREE.PointLight(0xffffff, 0.7, 0);
     light.position.set(0, 60, 100);
     this.scene.add(light);
@@ -47,14 +69,12 @@ class HandEngine {
     const intensity = 1;
     const lighta = new THREE.AmbientLight(color, intensity);
     this.scene.add(lighta);
+  }
 
-    this.setupCameraMovement();
-
+  private setupEventListeners() {
     window.addEventListener("resize", () => {
       // this.resize();
-      // console.log("r");
     });
-    BackgroundAnimation.makeRingedBakcground(this.scene);
   }
 
   private resize(): void {
@@ -66,60 +86,18 @@ class HandEngine {
     this.camera.updateProjectionMatrix();
   }
 
-  setupCameraMovement(): void {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-  }
-
-  addHand() {
-    const loader = new GLTFLoader();
-
-    loader.load(
-      "src/assets/3d/Hands2Anim.glb",
-      (gltf: GLTF) => {
-        this.hands = gltf.scene;
-        this.scene.add(this.hands);
-        console.log(this.hands);
-        this.mixer = new THREE.AnimationMixer(gltf.scene);
-        this.changeHandsMaterial();
-        gltf.animations.forEach((clip) => {
-          if (clip.name.includes("Idle")) {
-            this.mixer.clipAction(clip).play();
-          }
-        });
-      },
-      undefined,
-      function (error) {
-        console.error(error);
-      }
-    );
-  }
-
-  changeHandsMaterial() {
-    this.hands.children.forEach((hand) => {
-      const handMesh: THREE.SkinnedMesh = hand.children[1] as THREE.SkinnedMesh;
-      const newMaterial = new THREE.MeshLambertMaterial({
-        // color: 0xdaa520,
-        color: "white",
-        side: THREE.FrontSide,
-      });
-
-      handMesh.material = newMaterial;
-    });
-  }
-
   render() {
     this.frameId = requestAnimationFrame(() => {
       this.render();
     });
 
     this.frameTime += 1;
-    var delta = this.clock.getDelta();
 
     this.camera.lookAt(this.scene.position);
     this.renderer.render(this.scene, this.camera);
 
-    BackgroundAnimation.animateTriangles(this.frameTime);
-    if (this.mixer) this.mixer.update(delta);
+    Background.animateTriangles(this.frameTime);
+    Hands.updateHandsAnimation(this.clock);
   }
 
   stopRender() {
@@ -129,4 +107,4 @@ class HandEngine {
   }
 }
 
-export default new HandEngine();
+export default new Engine();

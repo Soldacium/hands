@@ -1,10 +1,14 @@
+import * as THREE from "three";
+
 type DirectionVector = [1, 0] | [0, 1] | [-1, 0] | [0, -1]; // eg. [-1,0] means next move is -1 on x axis (move left)
 
+// ############# LOGIC ###############
 // 1 - diemensional snake, because why not
 const snake: number[] = []; // board arr position of each
 const board: number[] = [];
 let currentDirection: DirectionVector = [1, 0];
 const boardSize = 10;
+const boardSizeTotal = boardSize * boardSize;
 const snakeSpeed = 1;
 
 const setupBoard = () => {
@@ -56,17 +60,50 @@ const getBoardSquarePostion = (n: number): [number, number] => {
 const setupKeyListeners = () => {
   // snake cant do a 180 deg turn at once
   window.addEventListener("keydown", (e) => {
-    if (e.key === ("ArrowUp" || "w") && currentDirection !== [0, -1]) {
+    if (e.key === ("ArrowUp" || "w") && currentDirection[1] != -1) {
       currentDirection = [0, 1];
-    } else if (e.key === ("ArrowDown" || "s") && currentDirection !== [0, 1]) {
+    } else if (e.key === ("ArrowDown" || "s") && currentDirection[1] != 1) {
       currentDirection = [0, -1];
-    } else if (e.key === ("ArrowLeft" || "a") && currentDirection !== [1, 0]) {
+    } else if (e.key === ("ArrowLeft" || "a") && currentDirection[0] != 1) {
       currentDirection = [-1, 0];
-    } else if (
-      e.key === ("ArrowRight" || "d") &&
-      currentDirection !== [-1, 0]
-    ) {
+    } else if (e.key === ("ArrowRight" || "d") && currentDirection[0] != -1) {
       currentDirection = [1, 0];
     }
   });
 };
+
+// ############## 3D ANIMATION ###############
+let board3d: THREE.InstancedMesh;
+const dummy = new THREE.Object3D();
+
+const create3dBoard = (scene: THREE.Scene) => {
+  const cubeGeo = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshLambertMaterial({
+    color: "white",
+  });
+
+  board3d = new THREE.InstancedMesh(cubeGeo, material, boardSizeTotal);
+  scene.add(board3d);
+
+  for (let i = 0; i < board3d.count; i++) {}
+
+  for (let i = 0; i < boardSize; i++) {
+    for (let j = 0; j < boardSize; j++) {
+      dummy.position.y = i - boardSize;
+      dummy.position.x = j - boardSize;
+      dummy.updateMatrix();
+
+      board3d.setMatrixAt(getBoardSquareNum(j, i), dummy.matrix);
+    }
+  }
+};
+
+// ########## EXPORTS ########
+const setupGame = (scene: THREE.Scene) => {
+  // setupKeyListeners();
+  setupBoard();
+  setupSnake();
+  create3dBoard(scene);
+};
+
+export default { setupGame };

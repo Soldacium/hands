@@ -1,20 +1,19 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from "vue";
-import HandEngine from "../../shared/services/hand-engine";
+import Engine from "../../shared/services/engine";
 
 let canvas: HTMLCanvasElement;
 
 onMounted(() => {
   canvas = document.getElementById("canvas") as HTMLCanvasElement;
+  console.log(canvas);
   if (canvas) {
-    HandEngine.init(canvas);
-    HandEngine.addHand();
-    HandEngine.render();
+    Engine.init(canvas);
   }
 });
 
 onUnmounted(() => {
-  HandEngine.stopRender();
+  Engine.stopRender();
 });
 </script>
 <template>
