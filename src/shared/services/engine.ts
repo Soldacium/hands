@@ -98,6 +98,7 @@ class Engine {
 
     Background.animateTriangles(this.frameTime);
     Hands.updateHandsAnimation(this.clock);
+    Snake.moveSnake(this.frameTime);
   }
 
   stopRender() {
